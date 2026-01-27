@@ -1,0 +1,38 @@
+name: Upstream Sync
+
+permissions:
+  contents: write
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 每天国际标准时间 0点（北京时间早8点）运行
+  workflow_dispatch: # 允许你手动点击按钮立刻同步
+
+jobs:
+  sync_latest_from_upstream:
+    runs-on: ubuntu-latest
+    name: Sync latest commits from upstream repo
+
+    steps:
+    - name: Checkout target repo
+      uses: actions/checkout@v3
+
+    - name: Sync upstream changes
+      id: sync
+      uses: aormsby/Fork-Sync-With-Upstream-action@v3.4
+      with:
+        # 这里已经填好了原作者地址
+        upstream_sync_repo: hywan9/Profiles
+        
+        # ⚠️ 注意：原仓库如果是 'master' 分支，请将下面两行改为 'master'
+        upstream_sync_branch: main
+        target_sync_branch: main
+        
+        target_repo_token: ${{ secrets.GITHUB_TOKEN }}
+        test_mode: false
+
+    - name: Sync check
+      if: failure()
+      run: |
+        echo "[Error] 自动同步失败，可能是上游代码变动导致冲突，请手动检查。"
+        exit 1
